@@ -101,7 +101,7 @@ int luring_send(lua_State *L) {
     if (!lua_isnoneornil(L, 5)){
         luaL_checkany(L, 5); /* it's a callback */
         lua_settop(L, 5);
-        int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+        callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
     Getsqe(sqe, ring);
     io_uring_prep_send(sqe, sockfd, buffer, buffer_len, flags);
