@@ -35,6 +35,8 @@ int luring_do_cqes(lua_State *L);
 
 int luring_open_file(lua_State *L);
 
+int luring_strerror(lua_State *L);
+
 LUALIB_API int luaopen_luring(lua_State *L){
     luaL_Reg reg[] = {
         {"queue_init", &luring_queue_init},
@@ -48,6 +50,7 @@ LUALIB_API int luaopen_luring(lua_State *L){
         {"do_cqes", &luring_do_cqes},
         {"cqe_seen", &luring_cqe_seen},
         {"open_file", &luring_open_file},
+        {"strerror", &luring_strerror},
         {NULL, NULL},
     };
     luaL_newlib(L, reg);

@@ -23,7 +23,10 @@ int luring_queue_init(lua_State *L) {
     unsigned int flags = luaL_checkuint(L, 2);
     lua_newuserdata(L, sizeof(struct io_uring));
     struct io_uring *ring = lua_touserdata(L, -1);
-    io_uring_queue_init(entries, ring, flags);
+    int ret = io_uring_queue_init(entries, ring, flags);
+    if (ret < 0){
+        luaL_error(L, "could not initialise queue: %s", strerror(-ret));
+    }
     if (luaL_newmetatable(L, LURING)) {
         lua_pushcfunction(L, luring_queue_exit);
         lua_setfield(L, -2, "__gc");
@@ -208,7 +211,7 @@ int luring_cqe_seen(lua_State *L) {
     if (req->callback_id != LUA_NOREF){
         luaL_unref(L, LUA_REGISTRYINDEX, req->callback_id);
     }
-    luring_request_free((struct luring_request*)cqe->user_data);
+    luring_request_free(io_uring_cqe_get_data(cqe));
     io_uring_cqe_seen(ring, cqe);
     return 0;
 }
@@ -222,26 +225,27 @@ int luring_do_cqes(lua_State *L) {
         ret = io_uring_peek_cqe(ring, &cqe);
         if (ret == 0) {
             Lcheckstack(L, 2);
-            struct luring_request *req = (struct luring_request*)cqe->user_data;
+            struct luring_request *req = io_uring_cqe_get_data(cqe);
             if (req->callback_id != LUA_NOREF) {
                 lua_rawgeti(L, LUA_REGISTRYINDEX, req->callback_id);
                 switch(req->type){
                     case REQ_TREAD:
-                    Lcheckstack(L, 2);
+                    Lcheckstack(L, 3);
                     lua_pushlightuserdata(L, cqe);
+                    lua_pushinteger(L, cqe->res);
                     lua_pushlstring(L, req->buffer, req->buffer_size);
-                    lua_call(L, 2, 0);
+                    lua_call(L, 3, 0);
                     break;
                     case REQ_TWRTIE:
-                    Lcheckstack(L, 1);
+                    Lcheckstack(L, 2);
                     lua_pushlightuserdata(L, cqe);
-                    lua_call(L, 1, 0);
+                    lua_pushinteger(L, cqe->res);
+                    lua_call(L, 2, 0);
                     break;
                     case REQ_TACCEPT: /* callback: cqe, sockfd (to client)*/
                     Lcheckstack(L, 2);
                     lua_pushlightuserdata(L, cqe);
                     lua_pushinteger(L, cqe->res);
-                    /* TODO: callback with addr */
                     lua_call(L, 2, 0);
                     break;
                 }
@@ -287,6 +291,15 @@ int luring_open_file(lua_State *L){
         lua_pushinteger(L, fd);
         return 1;
     } else {
-        luaL_error(L, "open %s: %s", name, strerror(errno));
+        Lcheckstack(L, 1);
+        lua_pushinteger(L, -errno);
+        return 1;
     }
+}
+
+int luring_strerror(lua_State *L){
+    lua_Integer eno = luaL_checkinteger(L, 1);
+    Lcheckstack(L, 1);
+    lua_pushstring(L, strerror(eno));
+    return 1;
 }
