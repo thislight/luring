@@ -4,9 +4,7 @@ local ring = luring.queue_init(4, 0)
 
 local fd = luring.open_file("./example.txt", "w+")
 
-luring.write(ring, fd, "Hello World!", 0, function(cqe)
-    luring.cqe_seen(ring, cqe)
-end)
+luring.write(ring, fd, "Hello World!", 0)
 
 luring.submit_and_wait(ring, 1)
 
