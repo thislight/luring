@@ -29,6 +29,8 @@ int luring_write(lua_State *L);
 
 int luring_read(lua_State *L);
 
+int luring_accept(lua_State *L);
+
 int luring_cqe_seen(lua_State *L);
 
 int luring_do_cqes(lua_State *L);
@@ -47,6 +49,7 @@ LUALIB_API int luaopen_luring(lua_State *L){
         {"recv", &luring_recv},
         {"write", &luring_write},
         {"read", &luring_read},
+        {"accept", &luring_accept},
         {"do_cqes", &luring_do_cqes},
         {"cqe_seen", &luring_cqe_seen},
         {"open_file", &luring_open_file},
