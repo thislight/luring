@@ -14,7 +14,10 @@ To use luring, you should have knownledge about how io_uring works, here're some
 - [An Introduction to the io_uring Asynchronous I/O Framework By Bijan Mottahedeh - Oracle Linux Blog](https://blogs.oracle.com/linux/an-introduction-to-the-io_uring-asynchronous-io-framework)
 
 In short, it just 4 step to correctly handle I/O actions by luring:
-1. Do actions by functions provided by luring, such as `write(ring, fd, content, offest, callback)`, `read(ring, fd, size, offest, callback)`, `recv(ring, sockfd, size, flags, callback)`, `send(ring, sockfd, content, flags, callback)`.
+1. Do actions by functions provided by luring, such as `write(ring, fd, content, offest, callback)`, `read(ring, fd, size, offest, callback)`, `recv(ring, sockfd, size, flags, callback)`, `send(ring, sockfd, content, flags, callback)`, `accept(ring, sockfd, flags, callback)`
 2. Submit. `submit(ring)` or `submit_and_wait(ring, wait_nr)`.
 3. Handle CQEs. This step you use `do_cqes(ring)`, which will block the thread and call the callbacks until no CQEs leaves in ring.
 4. Free resources. The first argument of callbacks is a userdata, which is a pointer to CQE. You MUST call `cqe_seen(ring, cqe)` on the userdata in the end of your callback, or the callback will be called repeatly and the other CQEs could not be processed.
+
+- [A basic example to read and write regular file](example/example.lua)
+- [Network programming example](example/net.lua)
