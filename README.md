@@ -17,4 +17,4 @@ In short, it just 4 step to correctly handle I/O actions by luring:
 1. Do actions by functions provided by luring, such as `write(ring, fd, content, offest, callback)`, `read(ring, fd, size, offest, callback)`, `recv(ring, sockfd, size, flags, callback)`, `send(ring, sockfd, content, flags, callback)`.
 2. Submit. `submit(ring)` or `submit_and_wait(ring, wait_nr)`.
 3. Handle CQEs. This step you use `do_cqes(ring)`, which will block the thread and call the callbacks until no CQEs leaves in ring.
-4. Free resources. The first argument of callbacks is a userdata, which is a pointer to CQE. You MUST call `cqe_seen(ring, cqe)` on the userdata after you finish works on it.
+4. Free resources. The first argument of callbacks is a userdata, which is a pointer to CQE. You MUST call `cqe_seen(ring, cqe)` on the userdata in the end of your callback, or the callback will be called repeatly and the other CQEs could not be processed.
