@@ -1,6 +1,8 @@
 # Luring
 Luring is a callback-style interface for Lua to "io_uring", which is the latest asynchronous I/O framework introduced in Linux Kernel 5.1.
 
+Luring uses liburing internally, you sould have installed liburing to compile it.
+
 ## Usage
 ````
 local luring = require "luring"
