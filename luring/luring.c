@@ -94,12 +94,15 @@ int luring_send(lua_State *L) {
     int buffer_len = luaL_len(L, 3);
     const char *buffer = luaL_checkstring(L, 3);
     int flags = luaL_checkinteger(L, 4);
-    luaL_checkany(L, 5); /* it's a callback */
-    lua_settop(L, 5);
-    int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
-    struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+    int callback_id = LUA_NOREF;
+    if (!lua_isnoneornil(L, 5)){
+        luaL_checkany(L, 5); /* it's a callback */
+        lua_settop(L, 5);
+        int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+    Getsqe(sqe, ring);
     io_uring_prep_send(sqe, sockfd, buffer, buffer_len, flags);
-    struct luring_request *req = luring_request_new(callback_id, 0, REQ_TWRTIE);
+    Getrequest(req, callback_id, 0, REQ_TWRTIE);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
     lua_pushlightuserdata(L, sqe);
@@ -111,11 +114,14 @@ int luring_recv(lua_State *L) {
     int sockfd = luaL_checkinteger(L, 2);
     size_t buffer_size = luaL_checkinteger(L, 3);
     int flags = luaL_checkinteger(L, 4);
-    luaL_checkany(L, 5); /* it's a callback */
-    lua_settop(L, 5);
-    int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
-    struct luring_request *req = luring_request_new(callback_id, buffer_size, REQ_TREAD);
-    struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+    int callback_id = LUA_NOREF;
+    if (!lua_isnoneornil(L, 5)){
+        luaL_checkany(L, 5); /* it's a callback */
+        lua_settop(L, 5);
+        callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+    Getrequest(req, callback_id, buffer_size, REQ_TREAD);
+    Getsqe(sqe, ring);
     io_uring_prep_recv(sqe, sockfd, req->buffer, req->buffer_size, flags);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
@@ -135,11 +141,14 @@ int luring_write(lua_State *L){
     if (offest > LONG_MAX){
         luaL_error(L, "offest should <= %ld", LONG_MAX);
     }
-    luaL_checkany(L ,5);
-    lua_settop(L, 5);
-    int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
-    struct luring_request *req = luring_request_new(callback_id, 0, REQ_TWRTIE);
-    struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
+    int callback_id = LUA_NOREF;
+    if (!lua_isnoneornil(L, 5)){
+        luaL_checkany(L ,5);
+        lua_settop(L, 5);
+        callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
+    Getrequest(req, callback_id, 0, REQ_TWRTIE);
+    Getsqe(sqe, ring);
     io_uring_prep_write(sqe, fd, content, (unsigned int)len, (off_t)offest);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
@@ -151,9 +160,12 @@ int luring_accept(lua_State *L){
     Geturing(ring, L, 1);
     int sockfd = luaL_checkinteger(L, 2);
     int flags = luaL_checkinteger(L, 3);
-    luaL_checkany(L, 4);
-    lua_settop(L, 4);
-    int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    int callback_id = LUA_NOREF;
+    if (!lua_isnoneornil(L, 4)){
+        luaL_checkany(L, 4);
+        lua_settop(L, 4);
+        callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
     Getrequest(req, callback_id, sizeof(struct sockaddr), REQ_TACCEPT);
     Getsqe(sqe, ring);
     io_uring_prep_accept(sqe, sockfd, req->buffer, &(req->sockaddrlen), flags);
@@ -174,9 +186,12 @@ int luring_read(lua_State *L){
     if (offest > LONG_MAX){
         luaL_argerror(L, 4, "offest must be not greater than LONG_MAX");
     }
-    luaL_checkany(L, 5);
-    lua_settop(L, 5);
-    int callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    int callback_id = LUA_NOREF;
+    if (!lua_isnoneornil(L, 5)){
+        luaL_checkany(L, 5);
+        lua_settop(L, 5);
+        callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
+    }
     Getrequest(req, callback_id, buffer_size, REQ_TREAD);
     Getsqe(sqe, ring);
     io_uring_prep_read(sqe, fd, req->buffer, (unsigned int)(req->buffer_size), (off_t)offest);
@@ -230,6 +245,13 @@ int luring_do_cqes(lua_State *L) {
                     lua_call(L, 2, 0);
                     break;
                 }
+            } else {
+                Lcheckstack(L, 3);
+                lua_pushcfunction(L, &luring_cqe_seen);
+                lua_pushnil(L);
+                lua_copy(L, 1, -1);
+                lua_pushlightuserdata(L, cqe);
+                lua_call(L, 2, 0);
             }
         }
     }
