@@ -6,7 +6,7 @@ source = {
 }
 description = {
    homepage = "https://github.com/thislight/luring",
-   license = "GPL v3 or later",
+   license = "Apache-2.0",
    summary = "Luring is a callback-style interface to io_uring.",
    detailed = [[Luring is a callback-style interface to io_uring. Io_uring is a new I/O framework introduced in Linux 5.1. You should have liburing to install it.]],
 }
