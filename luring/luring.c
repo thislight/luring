@@ -22,6 +22,8 @@
 
 #define Getsqe(var, ring) struct io_uring_sqe *var = io_uring_get_sqe(ring)
 
+#define Return_nil_if_sqe_null(L, sqe) if (sqe == NULL) { Lcheckstack(L, 1); lua_pushnil(L); return 1;}
+
 #define Getrequest(var, callback_id, buffer_size, type) struct luring_request *var = luring_request_new(callback_id, buffer_size, type)
 
 static unsigned int luaL_checkuint(lua_State *L, int arg) {
@@ -120,6 +122,7 @@ int luring_send(lua_State *L) {
         callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
     Getsqe(sqe, ring);
+    Return_nil_if_sqe_null(L, sqe);
     io_uring_prep_send(sqe, sockfd, buffer, buffer_len, flags);
     Getrequest(req, callback_id, 0, REQ_TWRTIE);
     io_uring_sqe_set_data(sqe, req);
@@ -139,8 +142,9 @@ int luring_recv(lua_State *L) {
         lua_settop(L, 5);
         callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
-    Getrequest(req, callback_id, buffer_size, REQ_TREAD);
     Getsqe(sqe, ring);
+    Return_nil_if_sqe_null(L, sqe);
+    Getrequest(req, callback_id, buffer_size, REQ_TREAD);
     io_uring_prep_recv(sqe, sockfd, req->buffer, req->buffer_size, flags);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
@@ -166,8 +170,9 @@ int luring_write(lua_State *L){
         lua_settop(L, 5);
         callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
-    Getrequest(req, callback_id, 0, REQ_TWRTIE);
     Getsqe(sqe, ring);
+    Return_nil_if_sqe_null(L, sqe);
+    Getrequest(req, callback_id, 0, REQ_TWRTIE);
     io_uring_prep_write(sqe, fd, content, (unsigned int)len, (off_t)offest);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
@@ -185,8 +190,9 @@ int luring_accept(lua_State *L){
         lua_settop(L, 4);
         callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
-    Getrequest(req, callback_id, sizeof(struct sockaddr), REQ_TACCEPT);
     Getsqe(sqe, ring);
+    Return_nil_if_sqe_null(L, sqe);
+    Getrequest(req, callback_id, sizeof(struct sockaddr), REQ_TACCEPT);
     io_uring_prep_accept(sqe, sockfd, req->buffer, &(req->sockaddrlen), flags);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
@@ -211,8 +217,9 @@ int luring_read(lua_State *L){
         lua_settop(L, 5);
         callback_id = luaL_ref(L, LUA_REGISTRYINDEX);
     }
-    Getrequest(req, callback_id, buffer_size, REQ_TREAD);
     Getsqe(sqe, ring);
+    Return_nil_if_sqe_null(L, sqe);
+    Getrequest(req, callback_id, buffer_size, REQ_TREAD);
     io_uring_prep_read(sqe, fd, req->buffer, (unsigned int)(req->buffer_size), (off_t)offest);
     io_uring_sqe_set_data(sqe, req);
     Lcheckstack(L, 1);
