@@ -21,3 +21,8 @@ In short, it is just 4 step to correctly handle I/O actions by luring:
 
 - [A basic example to read and write regular file](example/example.lua)
 - [Network programming example](example/net.lua)
+
+## License
+Apache License, version 2.0
+
+https://www.apache.org/licenses/LICENSE-2.0
