@@ -1,11 +1,13 @@
 package = "luring"
 version = "dev-1"
 source = {
-   url = "git+https://github.com/thislight/luring.git"
+   url = "git+https://github.com/thislight/luring.git",
 }
 description = {
    homepage = "https://github.com/thislight/luring",
-   license = "GPL v3 or later"
+   license = "GPL v3 or later",
+   summary = "Luring is a callback-style interface to io_uring.",
+   detailed = [[Luring is a callback-style interface to io_uring. Io_uring is a new I/O framework introduced in Linux 5.1. You should have liburing to install it.]],
 }
 build = {
    type = "builtin",
